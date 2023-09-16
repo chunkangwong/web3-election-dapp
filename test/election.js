@@ -25,9 +25,20 @@ contract("Election", (accounts) => {
 
   it("allows a voter to cast a vote", async () => {
     const candidateId = 1;
-    await electionInstance.vote(candidateId, {
+    const receipt = await electionInstance.vote(candidateId, {
       from: accounts[0],
     });
+    assert.equal(receipt.logs.length, 1, "an event was triggered");
+    assert.equal(
+      receipt.logs[0].event,
+      "votedEvent",
+      "the event type is correct"
+    );
+    assert.equal(
+      receipt.logs[0].args._candidateId.toNumber(),
+      candidateId,
+      "the candidate id is correct"
+    );
     const voted = await electionInstance.voters(accounts[0]);
     assert(voted, "the voter was marked as voted");
     const candidate = await electionInstance.candidates(candidateId);
