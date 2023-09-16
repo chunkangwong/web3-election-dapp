@@ -7,7 +7,8 @@ App = {
     return App.initWeb3();
   },
 
-  initWeb3: () => {
+  initWeb3: async () => {
+    await ethereum.request({ method: "eth_requestAccounts" });
     if (typeof web3 !== "undefined") {
       // If a web3 instance is already provided by Meta Mask.
       App.web3Provider = ethereum;
