@@ -52,36 +52,25 @@ contract("Election", (accounts) => {
     }
   });
 
-  it("throws an exception for double voting", function () {
-    return Election.deployed()
-      .then(function (instance) {
-        electionInstance = instance;
-        candidateId = 2;
-        electionInstance.vote(candidateId, { from: accounts[1] });
-        return electionInstance.candidates(candidateId);
-      })
-      .then(function (candidate) {
-        var voteCount = candidate[2];
-        assert.equal(voteCount, 1, "accepts first vote");
-        // Try to vote again
-        return electionInstance.vote(candidateId, { from: accounts[1] });
-      })
-      .then(assert.fail)
-      .catch(function (error) {
-        assert(
-          error.message.indexOf("revert") >= 0,
-          "error message must contain revert"
-        );
-        return electionInstance.candidates(1);
-      })
-      .then(function (candidate1) {
-        var voteCount = candidate1[2];
-        assert.equal(voteCount, 1, "candidate 1 did not receive any votes");
-        return electionInstance.candidates(2);
-      })
-      .then(function (candidate2) {
-        var voteCount = candidate2[2];
-        assert.equal(voteCount, 1, "candidate 2 did not receive any votes");
-      });
+  it("throws an exception for double voting", async () => {
+    const candidateId = 2;
+    await electionInstance.vote(candidateId, { from: accounts[1] });
+    const candidate = await electionInstance.candidates(candidateId);
+    const voteCount = candidate[2];
+    assert.equal(voteCount, 1, "accepts first vote");
+    try {
+      await electionInstance.vote(candidateId, { from: accounts[1] });
+    } catch (error) {
+      assert(
+        error.message.indexOf("revert") >= 0,
+        "error message must contain revert"
+      );
+      const candidate1 = await electionInstance.candidates(1);
+      const voteCount1 = candidate1[2];
+      assert.equal(voteCount1, 1, "candidate 1 did not receive any votes");
+      const candidate2 = await electionInstance.candidates(2);
+      const voteCount2 = candidate2[2];
+      assert.equal(voteCount2, 1, "candidate 2 did not receive any votes");
+    }
   });
 });
