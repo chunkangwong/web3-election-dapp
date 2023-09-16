@@ -34,6 +34,20 @@ App = {
     });
   },
 
+  castVote: async () => {
+    const candidateId = $("#candidatesSelect").val();
+    const electionInstance = await App.contracts.Election.deployed();
+    try {
+      await electionInstance.vote(candidateId, {
+        from: App.account,
+      });
+      $("#content").hide();
+      $("#loader").show();
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
   render: async () => {
     let electionInstance;
     const loader = $("#loader");
@@ -56,6 +70,8 @@ App = {
       const candidatesCount = await electionInstance.candidatesCount();
       const candidatesResults = $("#candidatesResults");
       candidatesResults.empty();
+      const candidatesSelect = $("#candidatesSelect");
+      candidatesSelect.empty();
 
       for (let i = 1; i <= candidatesCount; i++) {
         const candidate = await electionInstance.candidates(i);
@@ -73,8 +89,18 @@ App = {
           voteCount +
           "</td></tr>";
         candidatesResults.append(candidateTemplate);
+
+        // Render candidate ballot option
+        const candidateOption =
+          "<option value='" + id + "' >" + name + "</ option>";
+        candidatesSelect.append(candidateOption);
       }
 
+      const hasVoted = await electionInstance.voters(App.account);
+
+      if (hasVoted) {
+        $("form").hide();
+      }
       loader.hide();
       content.show();
     } catch (error) {
