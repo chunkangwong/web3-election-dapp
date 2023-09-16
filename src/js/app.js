@@ -3,11 +3,11 @@ App = {
   contracts: {},
   account: "0x0",
 
-  init: function () {
+  init: () => {
     return App.initWeb3();
   },
 
-  initWeb3: function () {
+  initWeb3: () => {
     if (typeof web3 !== "undefined") {
       // If a web3 instance is already provided by Meta Mask.
       App.web3Provider = web3.currentProvider;
@@ -22,8 +22,8 @@ App = {
     return App.initContract();
   },
 
-  initContract: function () {
-    $.getJSON("Election.json", function (election) {
+  initContract: () => {
+    $.getJSON("Election.json", (election) => {
       // Instantiate a new truffle contract from the artifact
       App.contracts.Election = TruffleContract(election);
       // Connect provider to interact with contract
@@ -33,16 +33,16 @@ App = {
     });
   },
 
-  render: function () {
-    var electionInstance;
-    var loader = $("#loader");
-    var content = $("#content");
+  render: async () => {
+    let electionInstance;
+    const loader = $("#loader");
+    const content = $("#content");
 
     loader.show();
     content.hide();
 
     // Load account data
-    web3.eth.getCoinbase(function (err, account) {
+    web3.eth.getCoinbase((err, account) => {
       if (err === null) {
         App.account = account;
         $("#accountAddress").html("Your Account: " + account);
@@ -50,40 +50,35 @@ App = {
     });
 
     // Load contract data
-    App.contracts.Election.deployed()
-      .then(function (instance) {
-        electionInstance = instance;
-        return electionInstance.candidatesCount();
-      })
-      .then(function (candidatesCount) {
-        var candidatesResults = $("#candidatesResults");
-        candidatesResults.empty();
+    try {
+      electionInstance = await App.contracts.Election.deployed();
+      const candidatesCount = await electionInstance.candidatesCount();
+      const candidatesResults = $("#candidatesResults");
+      candidatesResults.empty();
 
-        for (var i = 1; i <= candidatesCount; i++) {
-          electionInstance.candidates(i).then(function (candidate) {
-            var id = candidate[0];
-            var name = candidate[1];
-            var voteCount = candidate[2];
+      for (let i = 1; i <= candidatesCount; i++) {
+        const candidate = await electionInstance.candidates(i);
+        const id = candidate[0];
+        const name = candidate[1];
+        const voteCount = candidate[2];
 
-            // Render candidate Result
-            var candidateTemplate =
-              "<tr><th>" +
-              id +
-              "</th><td>" +
-              name +
-              "</td><td>" +
-              voteCount +
-              "</td></tr>";
-            candidatesResults.append(candidateTemplate);
-          });
-        }
+        // Render candidate Result
+        const candidateTemplate =
+          "<tr><th>" +
+          id +
+          "</th><td>" +
+          name +
+          "</td><td>" +
+          voteCount +
+          "</td></tr>";
+        candidatesResults.append(candidateTemplate);
+      }
 
-        loader.hide();
-        content.show();
-      })
-      .catch(function (error) {
-        console.warn(error);
-      });
+      loader.hide();
+      content.show();
+    } catch (error) {
+      console.warn(error);
+    }
   },
 };
 
